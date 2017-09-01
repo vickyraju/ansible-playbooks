@@ -1,0 +1,27 @@
+---  
+- hosts: localhost  
+  connection: local  
+  gather_facts: no    
+  vars:  
+    region: us-east-1
+  tasks:  
+    - name: launch instance
+      ec2:
+        region: "{{ region }}"  
+        key_name: devops-asnible  
+        instance_type: t2.micro  
+        image: ami-b63769a1  
+        wait: yes
+        group: launch-wizard-1    
+      register: ec2
+  
+    - name: associate new EIP for the instance    
+      ec2_eip:
+        region: "{{ region }}"
+        instance_id: "{{ item.id }}"
+      with_items: ec2.instances
+      register: eip
+
+    - name: output the IPs
+      debug: msg="Allocated IP inside the VPC is {{ item.public_ip }}"
+      with_items: eip.results
